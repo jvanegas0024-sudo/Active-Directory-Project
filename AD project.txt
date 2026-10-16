@@ -1,0 +1,70 @@
+AD project
+
+
+Tools used:
+VMware Workstation Pro
+Windows Server 2022-for 
+Windows 11
+
+ 
+
+
+Installing and setting up Windows Sever 2022:
+1- Create a virtual Machine for the Windows server with 90gb of storage,a 4 core CPU, and 4gb of RAM
+2- Name the VM DC01 and once installed change its Ip address to a static IP and the name to DC01(restart required afterwards)
+3-created another VM with the same Windows server image, named it SV02 and followed the same steps as DC01.
+4- I updated and restarded both servers
+Note: for the network settings of my VM I used Bridge mode to give it access to my Local Area Network.
+
+Installing Windows 11 Machines:
+note: I am only using Windows 11 as Windows 10 support has ended.
+1- Create a  VM with at least 2 cpu cores, 8GB of RAM, 64GB of Storage, and a Virtual TPM 2.0
+2- When Creating the VM you will be prompted by the VMware wizard to configure encryption, select Only the files needed to support a virtual TPM, create a password and when finished check that the TPM is present under devices.
+3- when doing the windows set up I picked the Windows 11 Education Operating system since it is capable of joining an on-premise Active Directory Domain and it has many of the advanced features. Note: Windows Home cannot join a AD Domain.
+4- When the windows set up is done I cloned the VM and created 3 more VMs to simulate multiple Machines on the network.
+5- I followed a simple naming convention of D-PC-<numbers 1-4>
+6- I changed the names of all four PC
+
+Install Active Directory Domain Services:
+1-From the DC01 Server I installed AD DS by clicking on Manage, Add Roles and Features.
+2- For installation type select Role-based or Feature-Based installation.
+3- The destination server should be DC01
+4- select the Active Directory Domain Services option. Clicking on this option will open an additional window that will identify all the roles and features that will be installed and are necessary for the proper functioning of this role.
+5- For the rest of the features I left with the defaults
+6-under confirmation installation selections I made sure to click the Restart the destination server automatically if required box and click install. Note: I is not appropriate to restart a server that is in operation in a business environment unless this restart has been scheduled in advance and does not affect the proper operation of any service.
+7- After installation was completed I restarted the server.
+8- promote DC01 to a domain controller
+9- This is a new domain so I selected add a new forest and named it corp.xyz.com
+10- for the domain controller I kept the defaults and created a password to DSRM password, which is a security measure for recovery situations in case the system is in a degraded state or when critical maintenance tasks need to be performed.
+11- For the NetBIOS name I used CORPXYZ, the NetBIOS name is primarily used for backward compatibility and to enable communication with legacy systems that use this technology.
+12- For the paths I kept the defaults, the NTDS stores the Active Directory database, where all directory objects and attributes are stored, including users, groups, policies, and system configurations. the same folder contains the transaction log files that record all operations performed on the Active Directory database.
+13- I reviewed all the options and everything was good.
+14- the prerequisites check passed and I clicked Install
+15- At  the end of the installation the server automatically restarted
+
+Users and Groups and DNS settings 
+1-For this homelab I decided to create a DNS forwarder pointing to my router, so that DC01 resolves local names like corp.xyz.com and google.com will be resolved by my router. I also changed the DNS IP address  of all the clients and servers to point to DC01. I would set the DHCP options on my router to automatically do this but I plan to only join the 4 VMs I created early.
+2. I changed DC01 DNS to point to itself and all other VMs to point to DC01
+3- For creating Organizational Units(OU) I decided to follow a simple structure. By going to Server Manager>Tools>Active Directory Users and Computers.
+4- Once I am there I created an OU with named XYZCorporation where I create sub-OUs, the XYZCorporation OU will make it easy to apply Group Policy Objects to the whole company such as password policies, default security policies, and default settings.
+5- Inside XYZCorporation I created the following OUs: 
+-Administration > To hold elevated domain and service accounts separate from regular users.
+-Departments > To group standard employee user accounts by department, which is also great for mapping network drives to specific deparments or deploying specific software.
+-Workstations to separate client OS endpoints types of machines(laptops/desktops)
+-Servers > to keep servers separate and apply more strict security policies.
+-Groups > to organize and security groups and keep them in a centralized place
+6- I will created one user named Jane Doe and added him to the IT department OU. 
+7- Under Groups/Department Roles I created a group policy named GRP_IT_ADMINS(or STAFF, decided to change it later on)and added the Jane Doe user to it.
+8- I created and linked a GPO to the IT OU by going to Server Manager>Tools>Group Policy Management, expanded my domain until I found the IT OU and by right clicking and selecting Create A GPO in this domain and link it here.
+9- I named it IT-Restricted-Settings, by clicking on it and going to security filtering I removed Authenticated users and added the GRP_IT_STAFF group as well as the Domain Admins.
+
+Adding machines:
+1-To add the machines I power up the windows 11 VM and went to its settings>System>Related Links>Domain or workgroup>change.
+2- Cliked on Domain and used the crendentials of a user account with permission to add machines to the domain
+
+
+
+
+ 
+
+
